@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Joke Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        select {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: white;
+            color: #333;
+        }
+        
+        select:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .joke-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .joke-category {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .loading {
+            display: none;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Joke Generator</h1>
+        <p class="subtitle">Get a random joke to brighten your day!</p>
+        
+        <div class="controls">
+            <select id="categorySelect">
+                <option value="Any">Any Category</option>
+                <option value="General">General</option>
+                <option value="Knock-Knock">Knock-Knock</option>
+                <option value="Programming">Programming</option>
+                <option value="Dark">Dark</option>
+                <option value="Pun">Pun</option>
+            </select>
+            
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="safeModeToggle">
+                <label for="safeModeToggle">Safe Mode</label>
+            </div>
+        </div>
+        
+        <div id="errorContainer"></div>
+        
+        <div class="joke-box">
+            <div>
+                <div class="joke-category" id="jokeCategory"></div>
+                <div id="jokeDisplay">Click "Get Joke" to start! 😄</div>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">Loading...</div>
+        
+        <button class="btn" onclick="getJoke()">Get Joke 😂</button>
+    </div>
+    
+    <script>
+        async function getJoke() {
+            const category = document.getElementById('categorySelect').value;
+            const safeMode = document.getElementById('safeModeToggle').checked;
+            const jokeDisplay = document.getElementById('jokeDisplay');
+            const jokeCategory = document.getElementById('jokeCategory');
+            const loading = document.getElementById('loading');
+            const errorContainer = document.getElementById('errorContainer');
+            
+            // Clear error
+            errorContainer.innerHTML = '';
+            
+            // Show loading
+            loading.style.display = 'block';
+            jokeDisplay.textContent = '';
+            
+            try {
+                const response = await fetch(`/api/joke?category=${category}&safe_mode=${safeMode}`);
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                
+                if (data.success) {
+                    jokeCategory.textContent = data.category || 'Unknown';
+                    jokeDisplay.textContent = data.joke;
+                } else {
+                    errorContainer.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                    jokeDisplay.textContent = 'Failed to load joke. Please try again.';
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                errorContainer.innerHTML = `<div class="error">Network error: ${error.message}</div>`;
+                jokeDisplay.textContent = 'Connection failed. Please check your internet.';
+            }
+        }
+        
+        // Get a joke on page load
+        window.addEventListener('load', getJoke);
+        
+        // Allow Enter key to get new joke
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                getJoke();
+            }
+        });
+    </script>
+</body>
+</html>
